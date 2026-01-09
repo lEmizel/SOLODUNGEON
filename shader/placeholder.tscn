@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3 uid="uid://c4fqr1f1gys86"]
+
+[ext_resource type="Material" uid="uid://b8pg2s2mdu1iv" path="res://shader/material_fog.tres" id="1_wlhf6"]
+[ext_resource type="Texture2D" uid="uid://dmy3g21hdcawb" path="res://placeholder.png" id="2_4j25n"]
+[ext_resource type="Material" uid="uid://cvyc6mqsk8qv2" path="res://shader/material_disolve.tres" id="3_4j25n"]
+
+[node name="Placeholder" type="Sprite2D"]
+material = ExtResource("1_wlhf6")
+position = Vector2(2347.5, 599.49994)
+scale = Vector2(4.0058594, 3.373047)
+texture = ExtResource("2_4j25n")
+
+[node name="Placeholder" type="Sprite2D" parent="."]
+material = ExtResource("3_4j25n")
+position = Vector2(-564.548, -4.8917084)
+texture = ExtResource("2_4j25n")

@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://cvyc6mqsk8qv2"]
+
+[ext_resource type="Shader" uid="uid://ev3y7wv2i4t6" path="res://shader/disolve.gdshader" id="1_mm5ar"]
+
+[resource]
+shader = ExtResource("1_mm5ar")
+shader_parameter/dissolve_amount = 0.3610000171475
+shader_parameter/edge_width = 0.094000004465
+shader_parameter/edge_color = Color(0.97833306, 0.8250415, 0.51232475, 1)
+shader_parameter/base_color = Color(0.5, 0.5, 0.5, 1)
+shader_parameter/noise_scale = 3.1730001032175
+shader_parameter/noise_intensity = 0.5
+shader_parameter/world_scale = 0.0031000001399700003

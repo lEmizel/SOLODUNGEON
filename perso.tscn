@@ -1,0 +1,19 @@
+[gd_scene load_steps=4 format=3 uid="uid://bar21si275rk4"]
+
+[ext_resource type="Texture2D" uid="uid://d28ee8j1xlvd" path="res://perso.png" id="1_kykce"]
+[ext_resource type="Script" uid="uid://dj1rdxspvfrn6" path="res://perso.gd" id="1_q4va4"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_q4va4"]
+
+[node name="CharacterBody2D" type="CharacterBody2D"]
+script = ExtResource("1_q4va4")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+z_index = 420
+texture = ExtResource("1_kykce")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CapsuleShape2D_q4va4")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+z_index = 245

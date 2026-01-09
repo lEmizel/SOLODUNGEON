@@ -1,0 +1,26 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3 uid="uid://b8pg2s2mdu1iv"]
+
+[ext_resource type="Shader" uid="uid://cqxuqjmof2add" path="res://shader/hidden_cell.gdshader" id="1_tye14"]
+
+[resource]
+shader = ExtResource("1_tye14")
+shader_parameter/time_scale = 1.0
+shader_parameter/world_scale = 0.001
+shader_parameter/base_color = Color(0, 0, 0, 1)
+shader_parameter/fog_color = Color(0.1, 0.05, 0.15, 1)
+shader_parameter/sparkle_color = Color(0.50756156, 0.38096842, 0.78307235, 1)
+shader_parameter/fog_intensity = 0.79600003781
+shader_parameter/fog_speed = 0.0
+shader_parameter/fog_scale = 2.802000109345
+shader_parameter/fog_softness = 0.5
+shader_parameter/noise_intensity = 0.0
+shader_parameter/noise_speed = 0.0
+shader_parameter/wave_intensity = 0.0
+shader_parameter/wave_speed = 0.0
+shader_parameter/wave_frequency = 10.0
+shader_parameter/sparkle_intensity = 0.2610000123975
+shader_parameter/sparkle_density = 33.5210015447475
+shader_parameter/sparkle_size = 0.13000000547648
+shader_parameter/sparkle_speed = 2.6670001266825
+shader_parameter/texture_mix = 0.286000013585
+shader_parameter/texture_brightness = 0.0

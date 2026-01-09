@@ -15,10 +15,16 @@ run/main_scene="uid://mhjdwy4ief65"
 config/features=PackedStringArray("4.5", "Mobile")
 config/icon="res://icon.svg"
 
+[autoload]
+
+DungeonManager="*res://dungeon_manager.gd"
+DUNGEONREFERENCE="*res://dungeonreference.gd"
+ConstructionFloor="*res://constructionfloor.gd"
+
 [display]
 
-window/size/viewport_width=360
-window/size/viewport_height=640
+window/size/viewport_width=1920
+window/size/viewport_height=1080
 
 [rendering]
 

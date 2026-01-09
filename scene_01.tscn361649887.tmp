@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://mhjdwy4ief65"]
+[gd_scene load_steps=4 format=3 uid="uid://mhjdwy4ief65"]
 
 [ext_resource type="Script" uid="uid://b1ic76itw68dr" path="res://scene_01.gd" id="1_7jhpt"]
+[ext_resource type="Texture2D" uid="uid://dmy3g21hdcawb" path="res://placeholder.png" id="2_uvpui"]
 [ext_resource type="Script" uid="uid://qyhnvqn0080n" path="res://spawnhero.gd" id="3_fa0a0"]
 
 [node name="Node2D" type="Node2D"]
@@ -8,6 +9,12 @@ script = ExtResource("1_7jhpt")
 branch_chance = 3.535
 max_branch_length = 4
 room_chance = 0.25
+floor_texture = ExtResource("2_uvpui")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(300, 918)
+offset = Vector2(0.08, 0)
+zoom = Vector2(0.54, 0.54)
 
 [node name="spawnhero" type="Node2D" parent="."]
 script = ExtResource("3_fa0a0")
