@@ -5,6 +5,7 @@ extends Node
 
 var rooms: Dictionary = {}
 var walls: Dictionary = {}
+var wall_collisions: Dictionary = {}  # Vector2i -> StaticBody2D
 
 const COLOR_HIDDEN = Color(0, 0, 0, 1.0)
 const COLOR_REVEALED = Color(0.5, 0.5, 0.5, 1.0)
@@ -32,6 +33,7 @@ var wall_texture: Texture2D = preload("uid://dlxr8jwg04upv")
 var hidden_material: ShaderMaterial = preload("uid://b8pg2s2mdu1iv")
 var dissolve_material: ShaderMaterial = preload("uid://cvyc6mqsk8qv2")
 var _walls_container: Node2D = null
+var _collisions_container: Node2D = null
 
 const DISSOLVE_DURATION: float = 0.5
 
@@ -53,7 +55,6 @@ func setup_from_dungeon() -> void:
 	
 	_generate_walls()
 	
-	# Créer les sols via ConstructionFloor
 	ConstructionFloor.setup()
 	
 	_hide_all()
@@ -69,15 +70,28 @@ func _clear_walls() -> void:
 			walls[pos].queue_free()
 	walls.clear()
 	
+	for pos in wall_collisions.keys():
+		if wall_collisions[pos]:
+			wall_collisions[pos].queue_free()
+	wall_collisions.clear()
+	
 	if _walls_container:
 		_walls_container.queue_free()
 	_walls_container = null
+	
+	if _collisions_container:
+		_collisions_container.queue_free()
+	_collisions_container = null
 
 
 func _generate_walls() -> void:
 	_walls_container = Node2D.new()
 	_walls_container.name = "WallsContainer"
 	DungeonManager._cells_container.add_sibling(_walls_container)
+	
+	_collisions_container = Node2D.new()
+	_collisions_container.name = "CollisionsContainer"
+	DungeonManager._cells_container.add_sibling(_collisions_container)
 	
 	var wall_positions: Dictionary = {}
 	
@@ -88,6 +102,7 @@ func _generate_walls() -> void:
 				wall_positions[neighbor] = true
 	
 	for pos in wall_positions.keys():
+		# Sprite du mur
 		var sprite = Sprite2D.new()
 		sprite.texture = wall_texture
 		sprite.centered = true
@@ -96,23 +111,33 @@ func _generate_walls() -> void:
 		sprite.material = hidden_material
 		_walls_container.add_child(sprite)
 		walls[pos] = sprite
+		
+		# Collision du mur
+		var body = StaticBody2D.new()
+		body.position = DungeonManager.grid_to_world(pos)
+		
+		var collision = CollisionShape2D.new()
+		var shape = RectangleShape2D.new()
+		shape.size = Vector2(DungeonManager.CELL_SIZE, DungeonManager.CELL_SIZE)
+		collision.shape = shape
+		
+		body.add_child(collision)
+		_collisions_container.add_child(body)
+		wall_collisions[pos] = body
 
 
 func _hide_all() -> void:
-	# Cacher les cases du DungeonManager
 	for pos in rooms.keys():
 		var cell = DungeonManager.get_cell(pos)
 		if cell and cell.sprite:
 			cell.sprite.modulate = COLOR_HIDDEN
 			cell.sprite.material = hidden_material
 		
-		# Cacher toutes les couches de sol
 		var floor_sprites = ConstructionFloor.get_all_sprites_at(pos)
 		for sprite in floor_sprites:
 			sprite.modulate = COLOR_HIDDEN
 			sprite.material = hidden_material
 	
-	# Cacher les murs
 	for pos in walls.keys():
 		if walls[pos]:
 			walls[pos].modulate = COLOR_HIDDEN
@@ -173,7 +198,6 @@ func reveal_room(pos: Vector2i) -> void:
 		cell.sprite.modulate = COLOR_REVEALED
 		cell.sprite.material = null
 	
-	# Révéler toutes les couches de sol
 	var floor_sprites = ConstructionFloor.get_all_sprites_at(pos)
 	for sprite in floor_sprites:
 		sprite.modulate = COLOR_REVEALED
@@ -201,7 +225,6 @@ func visit_room(pos: Vector2i) -> void:
 			cell.sprite.modulate = COLOR_VISIBLE
 			cell.sprite.material = null
 	
-	# Sol - toutes les couches
 	var floor_sprites = ConstructionFloor.get_all_sprites_at(pos)
 	for sprite in floor_sprites:
 		if was_revealed:

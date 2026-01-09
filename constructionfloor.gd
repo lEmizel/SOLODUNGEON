@@ -2,33 +2,80 @@ extends Node
 
 ## Autoload : ConstructionFloor
 ## Système de construction de sols par couches superposées
+## Charge automatiquement les textures selon la nomenclature
 
-# Dictionnaires de textures par couche
-var base: Dictionary = {
-	"base_1": preload("uid://s34jq31yajbj"),
-	"base_2": preload("uid://dbqic5rksux61"),
-}
+const TEXTURE_PATH: String = "res://ressource_base/"
+const SUPPORTED_EXTENSIONS: Array = ["png", "jpg", "webp"]
 
-var detail_a: Dictionary = {
-	"detail_a_1": preload("uid://lob10tvqsvq5"),
-	"detail_a_2": preload("uid://brgeesdvpu1p8"),
-	"detail_a_3": preload("uid://duk0hmdhbshdu"),
-}
-
-var detail_b: Dictionary = {
-	"detail_b_1": preload("uid://bsdbcrcyx85yu"),
-	"detail_b_2": preload("uid://cm6qi4kmcfnrp"),
-}
-
-# Chances d'apparition des détails (0.0 à 1.0)
 const DETAIL_A_CHANCE: float = 0.2
 const DETAIL_B_CHANCE: float = 0.2
 
-# Container pour les sols
+var textures: Dictionary = {}
 var _floors_container: Node2D = null
+var floor_sprites: Dictionary = {}
 
-# Référence aux sprites par position
-var floor_sprites: Dictionary = {}  # Vector2i -> { "base": Sprite2D, "detail_a": Sprite2D, "detail_b": Sprite2D }
+
+func _ready() -> void:
+	_scan_textures()
+
+
+func _scan_textures() -> void:
+	var dir = DirAccess.open(TEXTURE_PATH)
+	if not dir:
+		push_warning("ConstructionFloor: Impossible d'ouvrir " + TEXTURE_PATH)
+		return
+	
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	
+	while file_name != "":
+		if not dir.current_is_dir():
+			_try_load_texture(file_name)
+		file_name = dir.get_next()
+	
+	dir.list_dir_end()
+	
+	_print_loaded()
+
+
+func _try_load_texture(file_name: String) -> void:
+	if file_name.ends_with(".import"):
+		return
+	
+	var extension = file_name.get_extension().to_lower()
+	if extension not in SUPPORTED_EXTENSIONS:
+		return
+	
+	var base_name = file_name.get_basename()
+	var parts = base_name.split("_")
+	
+	if parts.size() < 2:
+		return
+	
+	# Prefix = tout sauf le dernier élément (le numéro)
+	var prefix_parts = parts.slice(0, parts.size() - 1)
+	var prefix = "_".join(prefix_parts).to_lower()
+	
+	if not textures.has(prefix):
+		textures[prefix] = []
+	
+	var full_path = TEXTURE_PATH + file_name
+	var tex = load(full_path)
+	
+	if tex:
+		textures[prefix].append(tex)
+
+
+func _print_loaded() -> void:
+	print("=== ConstructionFloor chargé ===")
+	for key in textures.keys():
+		print("  ", key, ": ", textures[key].size(), " textures")
+
+
+func _pick_random_texture(type: String) -> Texture2D:
+	if not textures.has(type) or textures[type].is_empty():
+		return null
+	return textures[type][randi() % textures[type].size()]
 
 
 func setup() -> void:
@@ -69,44 +116,39 @@ func _generate_floors() -> void:
 			"detail_b": null
 		}
 		
-		# Base obligatoire (z = 0)
-		var base_sprite = Sprite2D.new()
-		base_sprite.texture = _pick_random_texture(base)
-		base_sprite.centered = true
-		base_sprite.position = DungeonManager.grid_to_world(pos)
-		base_sprite.z_index = 0
-		_floors_container.add_child(base_sprite)
-		layers.base = base_sprite
+		var base_tex = _pick_random_texture("base")
+		if base_tex:
+			var base_sprite = Sprite2D.new()
+			base_sprite.texture = base_tex
+			base_sprite.centered = true
+			base_sprite.position = DungeonManager.grid_to_world(pos)
+			base_sprite.z_index = 0
+			_floors_container.add_child(base_sprite)
+			layers.base = base_sprite
 		
-		# Detail A (20% de chance, z = 1)
 		if randf() < DETAIL_A_CHANCE:
-			var detail_a_sprite = Sprite2D.new()
-			detail_a_sprite.texture = _pick_random_texture(detail_a)
-			detail_a_sprite.centered = true
-			detail_a_sprite.position = DungeonManager.grid_to_world(pos)
-			detail_a_sprite.z_index = 1
-			_floors_container.add_child(detail_a_sprite)
-			layers.detail_a = detail_a_sprite
+			var detail_a_tex = _pick_random_texture("detaila")
+			if detail_a_tex:
+				var detail_a_sprite = Sprite2D.new()
+				detail_a_sprite.texture = detail_a_tex
+				detail_a_sprite.centered = true
+				detail_a_sprite.position = DungeonManager.grid_to_world(pos)
+				detail_a_sprite.z_index = 1
+				_floors_container.add_child(detail_a_sprite)
+				layers.detail_a = detail_a_sprite
 		
-		# Detail B (20% de chance, z = 2)
 		if randf() < DETAIL_B_CHANCE:
-			var detail_b_sprite = Sprite2D.new()
-			detail_b_sprite.texture = _pick_random_texture(detail_b)
-			detail_b_sprite.centered = true
-			detail_b_sprite.position = DungeonManager.grid_to_world(pos)
-			detail_b_sprite.z_index = 2
-			_floors_container.add_child(detail_b_sprite)
-			layers.detail_b = detail_b_sprite
+			var detail_b_tex = _pick_random_texture("detailb")
+			if detail_b_tex:
+				var detail_b_sprite = Sprite2D.new()
+				detail_b_sprite.texture = detail_b_tex
+				detail_b_sprite.centered = true
+				detail_b_sprite.position = DungeonManager.grid_to_world(pos)
+				detail_b_sprite.z_index = 2
+				_floors_container.add_child(detail_b_sprite)
+				layers.detail_b = detail_b_sprite
 		
 		floor_sprites[pos] = layers
-
-
-func _pick_random_texture(dict: Dictionary) -> Texture2D:
-	var keys = dict.keys()
-	if keys.is_empty():
-		return null
-	var random_key = keys[randi() % keys.size()]
-	return dict[random_key]
 
 
 func get_floor_sprites(pos: Vector2i) -> Dictionary:
