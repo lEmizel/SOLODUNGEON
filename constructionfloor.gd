@@ -7,9 +7,6 @@ extends Node
 const TEXTURE_PATH: String = "res://ressource_base/"
 const SUPPORTED_EXTENSIONS: Array = ["png", "jpg", "webp"]
 
-const DETAIL_A_CHANCE: float = 0.2
-const DETAIL_B_CHANCE: float = 0.2
-
 var textures: Dictionary = {}
 var _floors_container: Node2D = null
 var floor_sprites: Dictionary = {}
@@ -52,7 +49,6 @@ func _try_load_texture(file_name: String) -> void:
 	if parts.size() < 2:
 		return
 	
-	# Prefix = tout sauf le dernier élément (le numéro)
 	var prefix_parts = parts.slice(0, parts.size() - 1)
 	var prefix = "_".join(prefix_parts).to_lower()
 	
@@ -88,12 +84,16 @@ func setup() -> void:
 func _clear() -> void:
 	for pos in floor_sprites.keys():
 		var layers = floor_sprites[pos]
-		if layers.base:
+		if layers.has("base") and layers.base:
 			layers.base.queue_free()
-		if layers.detail_a:
-			layers.detail_a.queue_free()
-		if layers.detail_b:
-			layers.detail_b.queue_free()
+		if layers.has("up") and layers.up:
+			layers.up.queue_free()
+		if layers.has("down") and layers.down:
+			layers.down.queue_free()
+		if layers.has("left") and layers.left:
+			layers.left.queue_free()
+		if layers.has("right") and layers.right:
+			layers.right.queue_free()
 	floor_sprites.clear()
 	
 	if _floors_container:
@@ -112,41 +112,73 @@ func _generate_floors() -> void:
 	for pos in DUNGEONREFERENCE.rooms.keys():
 		var layers = {
 			"base": null,
-			"detail_a": null,
-			"detail_b": null
+			"up": null,
+			"down": null,
+			"left": null,
+			"right": null
 		}
 		
+		var world_pos = DungeonManager.grid_to_world(pos)
+		var neighbors: Array = DUNGEONREFERENCE.rooms[pos].neighbors
+		
+		# Base toujours présente
 		var base_tex = _pick_random_texture("base")
 		if base_tex:
 			var base_sprite = Sprite2D.new()
 			base_sprite.texture = base_tex
 			base_sprite.centered = true
-			base_sprite.position = DungeonManager.grid_to_world(pos)
+			base_sprite.position = world_pos
 			base_sprite.z_index = 0
 			_floors_container.add_child(base_sprite)
 			layers.base = base_sprite
 		
-		if randf() < DETAIL_A_CHANCE:
-			var detail_a_tex = _pick_random_texture("detaila")
-			if detail_a_tex:
-				var detail_a_sprite = Sprite2D.new()
-				detail_a_sprite.texture = detail_a_tex
-				detail_a_sprite.centered = true
-				detail_a_sprite.position = DungeonManager.grid_to_world(pos)
-				detail_a_sprite.z_index = 1
-				_floors_container.add_child(detail_a_sprite)
-				layers.detail_a = detail_a_sprite
+		# Up - si voisin au nord
+		if (pos + Vector2i.UP) in neighbors:
+			var tex = _pick_random_texture("up")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 1
+				_floors_container.add_child(sprite)
+				layers.up = sprite
 		
-		if randf() < DETAIL_B_CHANCE:
-			var detail_b_tex = _pick_random_texture("detailb")
-			if detail_b_tex:
-				var detail_b_sprite = Sprite2D.new()
-				detail_b_sprite.texture = detail_b_tex
-				detail_b_sprite.centered = true
-				detail_b_sprite.position = DungeonManager.grid_to_world(pos)
-				detail_b_sprite.z_index = 2
-				_floors_container.add_child(detail_b_sprite)
-				layers.detail_b = detail_b_sprite
+		# Down - si voisin au sud
+		if (pos + Vector2i.DOWN) in neighbors:
+			var tex = _pick_random_texture("down")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 1
+				_floors_container.add_child(sprite)
+				layers.down = sprite
+		
+		# Left - si voisin à gauche
+		if (pos + Vector2i.LEFT) in neighbors:
+			var tex = _pick_random_texture("left")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 1
+				_floors_container.add_child(sprite)
+				layers.left = sprite
+		
+		# Right - si voisin à droite
+		if (pos + Vector2i.RIGHT) in neighbors:
+			var tex = _pick_random_texture("right")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 1
+				_floors_container.add_child(sprite)
+				layers.right = sprite
 		
 		floor_sprites[pos] = layers
 
@@ -160,8 +192,12 @@ func get_all_sprites_at(pos: Vector2i) -> Array[Sprite2D]:
 	var layers = floor_sprites.get(pos, {})
 	if layers.has("base") and layers.base:
 		result.append(layers.base)
-	if layers.has("detail_a") and layers.detail_a:
-		result.append(layers.detail_a)
-	if layers.has("detail_b") and layers.detail_b:
-		result.append(layers.detail_b)
+	if layers.has("up") and layers.up:
+		result.append(layers.up)
+	if layers.has("down") and layers.down:
+		result.append(layers.down)
+	if layers.has("left") and layers.left:
+		result.append(layers.left)
+	if layers.has("right") and layers.right:
+		result.append(layers.right)
 	return result

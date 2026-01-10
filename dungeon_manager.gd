@@ -1,6 +1,6 @@
 extends Node
 
-const CELL_SIZE: int = 512
+const CELL_SIZE: int = 1024
 
 const DIRECTIONS = [
 	Vector2i.UP,
