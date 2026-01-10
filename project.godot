@@ -17,10 +17,11 @@ config/icon="res://icon.svg"
 
 [autoload]
 
-DungeonManager="*res://dungeon_manager.gd"
-DUNGEONREFERENCE="*res://dungeonreference.gd"
-ConstructionFloor="*res://constructionfloor.gd"
-letterbox="*res://letterbox.gd"
+DungeonManager="*res://autoload/dungeon_manager.gd"
+DUNGEONREFERENCE="*res://autoload/dungeonreference.gd"
+ConstructionFloor="*res://autoload/constructionfloor.gd"
+letterbox="*res://autoload/letterbox.gd"
+DungeonEvent="*res://autoload/dungeon_event.gd"
 
 [display]
 
