@@ -9,11 +9,13 @@ height = 122.0
 
 [node name="CharacterBody2D" type="CharacterBody2D" groups=["player"]]
 script = ExtResource("1_q4va4")
+move_speed = 0.3
+fade_duration = 0.07
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 z_index = 420
 position = Vector2(4, -8.999992)
-scale = Vector2(0.147, 0.147)
+scale = Vector2(0.217, 0.217)
 texture = ExtResource("1_kykce")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -21,4 +23,3 @@ shape = SubResource("CapsuleShape2D_q4va4")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 z_index = 245
-zoom = Vector2(0.61, 0.61)

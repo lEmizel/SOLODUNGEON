@@ -2,7 +2,9 @@ extends CharacterBody2D
 
 var current_cell: Vector2i = Vector2i.ZERO
 var is_moving: bool = false
-var move_duration: float = 0.2
+
+@export var move_speed: float = 0.15  # Durée du déplacement
+@export var fade_duration: float = 0.1  # Durée du fondu
 
 const DIRECTIONS_CARDINAL = [
 	Vector2i.UP,
@@ -38,29 +40,17 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
-		print("=== MOUSE EVENT ===")
-		print("  Button: ", event.button_index)
-		print("  Pressed: ", event.pressed)
-		
 		if event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-			print("=== CLIC GAUCHE DETECTE ===")
 			if not is_moving:
 				_handle_click(event.position)
 
 
 func _handle_click(mouse_pos: Vector2) -> void:
 	var world_pos = get_canvas_transform().affine_inverse() * mouse_pos
-	print("  World position: ", world_pos)
-	
 	var target_cell = DungeonManager.world_to_grid(world_pos)
-	print("  Target cell: ", target_cell)
-	print("  Current cell: ", current_cell)
-	
 	var diff = target_cell - current_cell
-	print("  Diff: ", diff)
 	
 	if diff in DIRECTIONS_CARDINAL:
-		print("  -> MOVING!")
 		_try_move(diff)
 
 
@@ -76,7 +66,16 @@ func _try_move(direction: Vector2i) -> void:
 	var target_pos = DungeonManager.grid_to_world(current_cell)
 	
 	var tween = create_tween()
-	tween.tween_property(self, "position", target_pos, move_duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	
+	# 1. Fade out complet
+	tween.tween_property(self, "modulate:a", 0.0, fade_duration).set_ease(Tween.EASE_IN)
+	
+	# 2. Déplacement (invisible)
+	tween.tween_property(self, "position", target_pos, move_speed).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	
+	# 3. Fade in complet
+	tween.tween_property(self, "modulate:a", 1.0, fade_duration).set_ease(Tween.EASE_OUT)
+	
 	tween.tween_callback(_on_move_finished)
 
 

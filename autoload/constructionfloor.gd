@@ -1,8 +1,14 @@
 extends Node
 
 ## Autoload : ConstructionFloor
+## Système de construction de sols par couches superposées
+## Charge automatiquement les textures selon la nomenclature
 
 const TEXTURE_PATH: String = "res://ressource_base/"
+const SUPPORTED_EXTENSIONS: Array = ["png", "jpg", "webp"]
+
+const DETAIL_A_CHANCE: float = 0.65  # 65%
+const DETAIL_B_CHANCE: float = 0.35  # 35%
 
 var textures: Dictionary = {}
 var _floors_container: Node2D = null
@@ -10,40 +16,53 @@ var floor_sprites: Dictionary = {}
 
 
 func _ready() -> void:
-	_preload_textures()
+	_scan_textures()
 
 
-func _preload_textures() -> void:
-	# Liste manuelle des textures (nécessaire pour l'export)
-	var texture_files = [
-		"base_01.png",
-		"up_01.png",
-		"down_01.png",
-		"left_01.png",
-		"right_01.png",
-		# Ajoute ici les autres textures si tu en as
-	]
+func _scan_textures() -> void:
+	var dir = DirAccess.open(TEXTURE_PATH)
+	if not dir:
+		push_warning("ConstructionFloor: Impossible d'ouvrir " + TEXTURE_PATH)
+		return
 	
-	for file_name in texture_files:
-		var base_name = file_name.get_basename()
-		var parts = base_name.split("_")
-		
-		if parts.size() < 2:
-			continue
-		
-		var prefix_parts = parts.slice(0, parts.size() - 1)
-		var prefix = "_".join(prefix_parts).to_lower()
-		
-		if not textures.has(prefix):
-			textures[prefix] = []
-		
-		var full_path = TEXTURE_PATH + file_name
-		var tex = load(full_path)
-		
-		if tex:
-			textures[prefix].append(tex)
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	
+	while file_name != "":
+		if not dir.current_is_dir():
+			_try_load_texture(file_name)
+		file_name = dir.get_next()
+	
+	dir.list_dir_end()
 	
 	_print_loaded()
+
+
+func _try_load_texture(file_name: String) -> void:
+	if file_name.ends_with(".import"):
+		return
+	
+	var extension = file_name.get_extension().to_lower()
+	if extension not in SUPPORTED_EXTENSIONS:
+		return
+	
+	var base_name = file_name.get_basename()
+	var parts = base_name.split("_")
+	
+	if parts.size() < 2:
+		return
+	
+	var prefix_parts = parts.slice(0, parts.size() - 1)
+	var prefix = "_".join(prefix_parts).to_lower()
+	
+	if not textures.has(prefix):
+		textures[prefix] = []
+	
+	var full_path = TEXTURE_PATH + file_name
+	var tex = load(full_path)
+	
+	if tex:
+		textures[prefix].append(tex)
 
 
 func _print_loaded() -> void:
@@ -78,6 +97,10 @@ func _clear() -> void:
 			layers.left.queue_free()
 		if layers.has("right") and layers.right:
 			layers.right.queue_free()
+		if layers.has("detail_a") and layers.detail_a:
+			layers.detail_a.queue_free()
+		if layers.has("detail_b") and layers.detail_b:
+			layers.detail_b.queue_free()
 	floor_sprites.clear()
 	
 	if _floors_container:
@@ -99,12 +122,15 @@ func _generate_floors() -> void:
 			"up": null,
 			"down": null,
 			"left": null,
-			"right": null
+			"right": null,
+			"detail_a": null,
+			"detail_b": null
 		}
 		
 		var world_pos = DungeonManager.grid_to_world(pos)
 		var neighbors: Array = DUNGEONREFERENCE.rooms[pos].neighbors
 		
+		# Base toujours présente
 		var base_tex = _pick_random_texture("base")
 		if base_tex:
 			var base_sprite = Sprite2D.new()
@@ -115,6 +141,7 @@ func _generate_floors() -> void:
 			_floors_container.add_child(base_sprite)
 			layers.base = base_sprite
 		
+		# Up - si voisin au nord
 		if (pos + Vector2i.UP) in neighbors:
 			var tex = _pick_random_texture("up")
 			if tex:
@@ -126,6 +153,7 @@ func _generate_floors() -> void:
 				_floors_container.add_child(sprite)
 				layers.up = sprite
 		
+		# Down - si voisin au sud
 		if (pos + Vector2i.DOWN) in neighbors:
 			var tex = _pick_random_texture("down")
 			if tex:
@@ -137,6 +165,7 @@ func _generate_floors() -> void:
 				_floors_container.add_child(sprite)
 				layers.down = sprite
 		
+		# Left - si voisin à gauche
 		if (pos + Vector2i.LEFT) in neighbors:
 			var tex = _pick_random_texture("left")
 			if tex:
@@ -148,6 +177,7 @@ func _generate_floors() -> void:
 				_floors_container.add_child(sprite)
 				layers.left = sprite
 		
+		# Right - si voisin à droite
 		if (pos + Vector2i.RIGHT) in neighbors:
 			var tex = _pick_random_texture("right")
 			if tex:
@@ -158,6 +188,30 @@ func _generate_floors() -> void:
 				sprite.z_index = 1
 				_floors_container.add_child(sprite)
 				layers.right = sprite
+		
+		# Detail A - 65% de chance
+		if randf() < DETAIL_A_CHANCE:
+			var tex = _pick_random_texture("detaila")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 2
+				_floors_container.add_child(sprite)
+				layers.detail_a = sprite
+		
+		# Detail B - 35% de chance
+		if randf() < DETAIL_B_CHANCE:
+			var tex = _pick_random_texture("detailb")
+			if tex:
+				var sprite = Sprite2D.new()
+				sprite.texture = tex
+				sprite.centered = true
+				sprite.position = world_pos
+				sprite.z_index = 3
+				_floors_container.add_child(sprite)
+				layers.detail_b = sprite
 		
 		floor_sprites[pos] = layers
 
@@ -179,4 +233,8 @@ func get_all_sprites_at(pos: Vector2i) -> Array[Sprite2D]:
 		result.append(layers.left)
 	if layers.has("right") and layers.right:
 		result.append(layers.right)
+	if layers.has("detail_a") and layers.detail_a:
+		result.append(layers.detail_a)
+	if layers.has("detail_b") and layers.detail_b:
+		result.append(layers.detail_b)
 	return result
